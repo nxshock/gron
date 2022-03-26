@@ -20,7 +20,7 @@ type JobConfig struct {
 	Description string
 }
 
-var currentRunningJobsMutex sync.RWMutex
+var globalMutex sync.RWMutex
 
 func readJob(filePath string) (*Job, error) {
 	var jobConfig JobConfig
@@ -69,10 +69,10 @@ type Job struct {
 func (j *Job) Run() {
 	startTime := time.Now()
 
-	currentRunningJobsMutex.Lock()
+	globalMutex.Lock()
 	j.CurrentRunningCount++
 	j.LastStartTime = startTime.Format(timeFormat)
-	currentRunningJobsMutex.Unlock()
+	globalMutex.Unlock()
 
 	jobLogFile, _ := os.OpenFile(filepath.Join(logFilesPath, j.FileName+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	defer jobLogFile.Close()
@@ -94,22 +94,22 @@ func (j *Job) Run() {
 		log.WithField("job", j.FileName).Error(err.Error())
 		l.WithField("job", j.FileName).Error(err.Error())
 
-		currentRunningJobsMutex.Lock()
+		globalMutex.Lock()
 		j.LastError = err.Error()
-		currentRunningJobsMutex.Unlock()
+		globalMutex.Unlock()
 	} else {
-		currentRunningJobsMutex.Lock()
+		globalMutex.Lock()
 		j.LastError = ""
-		currentRunningJobsMutex.Unlock()
+		globalMutex.Unlock()
 	}
 
 	endTime := time.Now()
 	log.WithField("job", j.FileName).Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
 	l.Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
 
-	currentRunningJobsMutex.Lock()
+	globalMutex.Lock()
 	j.CurrentRunningCount--
 	j.LastEndTime = endTime.Format(timeFormat)
 	j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
-	currentRunningJobsMutex.Unlock()
+	globalMutex.Unlock()
 }
