@@ -65,7 +65,7 @@
 		}
 
 		th {
-			background-color: var(--base02);
+			background-color: var(--base01);
 		}
 
 		td,
@@ -74,7 +74,7 @@
 			padding: 0.25em;
 		}
 
-		button {
+		table button {
 			width: 100%;
 			color: #fff;
 			background-color: var(--base01);
@@ -99,11 +99,50 @@
 		.runningbg {
 			background-color: var(--base0B);
 		}
+		
+		.dropbtn {
+			background-color: var(--base01);
+			color: var(--base05);
+			padding: 0.5em;
+			cursor: pointer;
+			border: 0;
+		}
+		
+		.dropdown {
+			position: relative;
+			display: inline-block;
+			float: right;
+		}
+		
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			right: 0;
+			background-color: var(--base01);
+			z-index: 1;
+		}
+
+		.dropdown-content a {
+			color: var(--base05);
+			padding: 0.5em;
+			text-decoration: none;
+			display: block;
+		}
+
+		.dropdown:hover .dropdown-content {
+			display: block;
+		}
 	</style>
 </head>
 
 <body>
 	<main>
+		<div class="dropdown">
+			<button class="dropbtn">☰ Menu</button>
+			<div class="dropdown-content">
+				<a href="/shutdown">Shutdown</a>
+			</div>
+		</div>
 		<h1>Job list</h1>
 		<table>
 			<tr>

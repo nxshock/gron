@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -11,6 +12,7 @@ import (
 
 func httpServer(listenAddress string) {
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/shutdown", handleShutdown)
 	http.HandleFunc("/start", handleForceStart)
 	log.WithField("job", "http_server").Fatal(http.ListenAndServe(listenAddress, nil))
 }
@@ -55,4 +57,15 @@ func handleForceStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, fmt.Sprintf("there is no job with name %s", jobName), http.StatusBadRequest)
+}
+
+func handleShutdown(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Application terminated.\n"))
+
+	go func() {
+		time.Sleep(time.Second)
+		log.WithField("job", "http_server").Infoln("Shutdown requested")
+		os.Exit(0)
+	}()
 }
