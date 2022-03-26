@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<title>go-cron</title>
+	<style>
+		/*
+	Based on base16 architecture for building themes
+	https://github.com/chriskempson/base16
+*/
+		:root {
+			--base00: #282c34;
+			/* Default Background */
+			--base01: #353b45;
+			/* Lighter Background */
+			--base02: #3e4451;
+			/* Selection Background */
+			--base03: #545862;
+			/* Comments, Invisibles, Line Highlighting */
+			--base04: #565c64;
+			/* Dark Foreground (Used for status bars) */
+			--base05: #abb2bf;
+			/* Default Foreground, Caret, Delimiters, Operators */
+			--base06: #b6bdca;
+			/* Light Foreground (Not often used) */
+			--base07: #c8ccd4;
+			/* Light Background (Not often used) */
+			--base08: #e06c75;
+			/* Red */
+			--base09: #d19a66;
+			/* Orange */
+			--base0A: #e5c07b;
+			/* Yellow */
+			--base0B: #98c379;
+			/* Green */
+			--base0C: #56b6c2;
+			/* Aqua */
+			--base0D: #61afef;
+			/* Blue */
+			--base0E: #c678dd;
+			/* Purple */
+			--base0F: #be5046;
+			/* Dark red */
+		}
+
+		* {
+			font-family: Verdana;
+			font-size: 14px;
+			color: var(--base05);
+			margin: 0;
+			padding: 0;
+		}
+
+		html {
+			height: 100%
+		}
+
+		body {
+			background-color: var(--base00);
+			display: flex;
+			justify-content: space-between;
+			flex-wrap: nowrap;
+			flex-direction: column;
+			height: 100%;
+		}
+
+		h1 {
+			margin-top: 1em;
+			font-size: 150%;
+			margin-bottom: 0.5em;
+		}
+
+		main {
+			flex-grow: 1;
+			padding-left: 1em;
+			padding-right: 1em;
+		}
+
+		table {
+			border-collapse: collapse;
+		}
+
+		th {
+			background-color: var(--base02);
+		}
+
+		td,
+		th {
+			border: 1px solid var(--base03);
+			padding: 0.25em;
+		}
+
+		button {
+			width: 100%;
+			color: #fff;
+			background-color: var(--base01);
+			border: 1px solid var(--base03);
+		}
+
+		form {
+			display: none;
+		}
+
+		.smaller {
+			font-size: 75%;
+		}
+
+		.nowrap {
+			white-space: nowrap;
+		}
+
+		.errorbg {
+			background-color: var(--base08);
+		}
+		.runningbg {
+			background-color: var(--base0B);
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		<h1>Job list</h1>
+		<table>
+			<tr>
+				<th>Name</th>
+				<th>Description</th>
+				<th>Cron</th>
+				<th>Status</th>
+				<th>Last start time</th>
+				<th>Last finish time</th>
+				<th>Last execution time</th>
+				<th>Last error</th>
+			</tr>
+			{{range .}}<tr>
+				<td>
+					<form action="/start" method="get" id="form-{{.Name}}"></form>
+					<button{{if gt .CurrentRunningCount 0}} class="runningbg"{{else}}{{if .LastError}} class="errorbg"{{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}"{{if gt .CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
+				</td>
+				<td class="smaller">{{.Description}}</td>
+				<td class="nowrap" align="right">{{.Cron}}</td>
+				<td>{{if gt .CurrentRunningCount 1}}running {{.CurrentRunningCount}} jobs{{else}}{{if .CurrentRunningCount}}running{{end}}{{end}}</td>
+				<td>{{.LastStartTime}}</td>
+				<td>{{.LastEndTime}}</td>
+				<td align="right">{{.LastExecutionDuration}}</td>
+				<td class="smaller">{{.LastError}}</td>
+			</tr>{{end}}
+		</table>
+	</main>
+</body>
+
+</html>
