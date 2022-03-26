@@ -9,22 +9,38 @@
 		/* Based on base16 architecture for building themes
 		   https://github.com/chriskempson/base16 */
 		:root {
-			--base00: #282c34; /* Default Background */
-			--base01: #353b45; /* Lighter Background */
-			--base02: #3e4451; /* Selection Background */
-			--base03: #545862; /* Comments, Invisibles, Line Highlighting */
-			--base04: #565c64; /* Dark Foreground (Used for status bars) */
-			--base05: #abb2bf; /* Default Foreground, Caret, Delimiters, Operators */
-			--base06: #b6bdca; /* Light Foreground (Not often used) */
-			--base07: #c8ccd4; /* Light Background (Not often used) */
-			--base08: #e06c75; /* Red */
-			--base09: #d19a66; /* Orange */
-			--base0A: #e5c07b; /* Yellow */
-			--base0B: #98c379; /* Green */
-			--base0C: #56b6c2; /* Aqua */
-			--base0D: #61afef; /* Blue */
-			--base0E: #c678dd; /* Purple */
-			--base0F: #be5046; /* Dark red */
+			/* Default Background */
+			--base00: #282c34;
+			/* Lighter Background */
+			--base01: #353b45;
+			/* Selection Background */
+			--base02: #3e4451;
+			/* Comments, Invisibles, Line Highlighting */
+			--base03: #545862;
+			/* Dark Foreground (Used for status bars) */
+			--base04: #565c64;
+			/* Default Foreground, Caret, Delimiters, Operators */
+			--base05: #abb2bf;
+			/* Light Foreground (Not often used) */
+			--base06: #b6bdca;
+			/* Light Background (Not often used) */
+			--base07: #c8ccd4;
+			/* Red */
+			--base08: #e06c75;
+			/* Orange */
+			--base09: #d19a66;
+			/* Yellow */
+			--base0A: #e5c07b;
+			/* Green */
+			--base0B: #98c379;
+			/* Aqua */
+			--base0C: #56b6c2;
+			/* Blue */
+			--base0D: #61afef;
+			/* Purple */
+			--base0E: #c678dd;
+			/* Dark red */
+			--base0F: #be5046;
 		}
 
 		* {
@@ -74,11 +90,17 @@
 			padding: 0.25em;
 		}
 
+		td:first-child {
+			padding: 0;
+		}
+
 		table button {
 			width: 100%;
-			color: #fff;
+			color: var(--base07);
 			background-color: var(--base01);
-			border: 1px solid var(--base03);
+			border: 0;
+			cursor: pointer;
+			padding: 0.25em;
 		}
 
 		form {
@@ -96,10 +118,11 @@
 		.errorbg {
 			background-color: var(--base08);
 		}
+
 		.runningbg {
 			background-color: var(--base0B);
 		}
-		
+
 		.dropbtn {
 			background-color: var(--base01);
 			color: var(--base05);
@@ -107,13 +130,13 @@
 			cursor: pointer;
 			border: 0;
 		}
-		
+
 		.dropdown {
 			position: relative;
 			display: inline-block;
 			float: right;
 		}
-		
+
 		.dropdown-content {
 			display: none;
 			position: absolute;
@@ -158,11 +181,14 @@
 			{{range .}}<tr>
 				<td>
 					<form action="/start" method="get" id="form-{{.Name}}"></form>
-					<button{{if gt .CurrentRunningCount 0}} class="runningbg"{{else}}{{if .LastError}} class="errorbg"{{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}"{{if gt .CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
+					<button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg"
+						{{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}" {{if gt
+						.CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
 				</td>
 				<td class="smaller">{{.Description}}</td>
 				<td class="nowrap" align="right">{{.Cron}}</td>
-				<td>{{if gt .CurrentRunningCount 1}}running {{.CurrentRunningCount}} jobs{{else}}{{if .CurrentRunningCount}}running{{end}}{{end}}</td>
+				<td>{{if gt .CurrentRunningCount 1}}running {{.CurrentRunningCount}} jobs{{else}}{{if
+					.CurrentRunningCount}}running{{end}}{{end}}</td>
 				<td>{{.LastStartTime}}</td>
 				<td>{{.LastEndTime}}</td>
 				<td align="right">{{.LastExecutionDuration}}</td>
