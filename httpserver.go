@@ -12,6 +12,7 @@ import (
 
 func httpServer(listenAddress string) {
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/reloadJobs", handleReloadJobs)
 	http.HandleFunc("/shutdown", handleShutdown)
 	http.HandleFunc("/start", handleForceStart)
 	log.WithField("job", "http_server").Fatal(http.ListenAndServe(listenAddress, nil))
@@ -23,7 +24,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentRunningJobsMutex.RLock()
+	globalMutex.RLock()
 	buf := new(bytes.Buffer)
 	jobEntries := c.Entries()
 	var jobs []*Job
@@ -31,7 +32,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		jobs = append(jobs, v.Job.(*Job))
 	}
 	indexTemplate.ExecuteTemplate(buf, "index", jobs)
-	currentRunningJobsMutex.RUnlock()
+	globalMutex.RUnlock()
 
 	buf.WriteTo(w)
 }
@@ -68,4 +69,25 @@ func handleShutdown(w http.ResponseWriter, r *http.Request) {
 		log.WithField("job", "http_server").Infoln("Shutdown requested")
 		os.Exit(0)
 	}()
+}
+
+func handleReloadJobs(w http.ResponseWriter, r *http.Request) {
+	globalMutex.Lock()
+	defer globalMutex.Unlock()
+
+	c.Stop()
+
+	for _, entry := range c.Entries() {
+		c.Remove(entry.ID)
+	}
+
+	err := initJobs()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("reload jobs error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	c.Start()
+
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }

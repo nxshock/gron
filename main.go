@@ -33,11 +33,10 @@ func init() {
 	c = cron.New()
 }
 
-func main() {
+func initJobs() error {
 	log := log.WithField("job", "core")
 
-	log.Info("started")
-
+	log.Infoln("Reading jobs...")
 	err := filepath.Walk("jobs.d", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -61,14 +60,27 @@ func main() {
 		return nil
 	})
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	if len(c.Entries()) == 0 {
-		log.Fatal("no jobs loaded")
+		log.Warn("No jobs loaded.")
+	} else {
+		log.Infof("Loaded jobs count: %d", len(c.Entries()))
 	}
 
-	log.Infof("loaded jobs count: %d", len(c.Entries()))
+	return nil
+}
+
+func main() {
+	log := log.WithField("job", "core")
+
+	log.Info("Started.")
+
+	err := initJobs()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	c.Start()
 
@@ -76,10 +88,10 @@ func main() {
 	signal.Notify(intChan, syscall.SIGTERM)
 	<-intChan
 
-	log.Info("got stop signal")
+	log.Info("Got stop signal.")
 
 	err = logFile.Close()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 }
