@@ -1,4 +1,4 @@
-module github.com/nxshock/go-cron
+module github.com/nxshock/gron
 
 go 1.18
 

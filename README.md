@@ -11,5 +11,5 @@
     Command     = "echo Hello"               # command to execute
     Description = "print Hello every minute" # job description
     ```
-3. Launch `go-cron` binary
+3. Launch `gron` binary
 4. HTTP interface available on http://127.0.0.1:9876
