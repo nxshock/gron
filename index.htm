@@ -96,7 +96,7 @@
 
 		table button {
 			width: 100%;
-			color: var(--base07);
+			color: #fff;
 			background-color: var(--base01);
 			border: 0;
 			cursor: pointer;
@@ -156,6 +156,14 @@
 		.dropdown:hover .dropdown-content {
 			display: block;
 		}
+
+		.green {
+			color: var(--base0B);
+		}
+
+		.red {
+			color: var(--base08);
+		}
 	</style>
 </head>
 
@@ -186,18 +194,15 @@
 			{{range .}}<tr>
 				<td>
 					<form action="/start" method="get" id="form-{{.Name}}"></form>
-					<button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg"
-						{{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}" {{if gt
-						.CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
+					<button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg" {{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}" {{if gt .CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
 				</td>
 				<td class="smaller">{{.Description}}</td>
 				<td class="nowrap" align="right">{{.Cron}}</td>
-				<td>{{if gt .CurrentRunningCount 1}}&#x25b6; running {{.CurrentRunningCount}} jobs{{else}}{{if
-					.CurrentRunningCount}}running{{end}}{{end}}</td>
+				<td class="nowrap">{{if gt .CurrentRunningCount 1}}<span class="red">running {{.CurrentRunningCount}} jobs</span>{{else}}{{if .CurrentRunningCount}}<span class="green">&#x25b6; running</span>{{else}}&#x23F9; inactive{{end}}{{end}}</td>
 				<td>{{.LastStartTime}}</td>
 				<td>{{.LastEndTime}}</td>
 				<td align="right">{{.LastExecutionDuration}}</td>
-				<td class="smaller">{{.LastError}}</td>
+				<td class="smaller red">{{.LastError}}</td>
 			</tr>{{end}}
 		</table>
 	</main>
