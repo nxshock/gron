@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -53,7 +54,11 @@ func handleForceStart(w http.ResponseWriter, r *http.Request) {
 	for _, jobEntry := range jobEntries {
 		job := jobEntry.Job.(*Job)
 		if job.FileName == jobName {
-			log.WithField("job", "http_server").Printf("forced start %s", job.FileName)
+			host, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				host = r.RemoteAddr
+			}
+			log.WithField("job", "http_server").Printf("forced start %s from %s", job.FileName, host)
 			go job.Run()
 			time.Sleep(time.Second / 4) // wait some time for job start
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
