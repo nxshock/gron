@@ -11,6 +11,10 @@ import (
 )
 
 func httpServer(listenAddress string) {
+	if listenAddress == "none" {
+		return
+	}
+
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/reloadJobs", handleReloadJobs)
 	http.HandleFunc("/shutdown", handleShutdown)

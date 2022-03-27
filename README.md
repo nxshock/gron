@@ -1,4 +1,4 @@
-# go-cron
+# gron
 
 *cron-like job scheduler*
 

@@ -71,10 +71,10 @@ func (j *Job) Run() {
 
 	globalMutex.Lock()
 	j.CurrentRunningCount++
-	j.LastStartTime = startTime.Format(timeFormat)
+	j.LastStartTime = startTime.Format(config.TimeFormat)
 	globalMutex.Unlock()
 
-	jobLogFile, _ := os.OpenFile(filepath.Join(logFilesPath, j.FileName+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.FileName+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	defer jobLogFile.Close()
 	defer jobLogFile.WriteString("\n")
 
@@ -109,7 +109,7 @@ func (j *Job) Run() {
 
 	globalMutex.Lock()
 	j.CurrentRunningCount--
-	j.LastEndTime = endTime.Format(timeFormat)
+	j.LastEndTime = endTime.Format(config.TimeFormat)
 	j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
 	globalMutex.Unlock()
 }

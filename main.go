@@ -13,12 +13,20 @@ import (
 var c *cron.Cron
 
 func init() {
-	err := os.MkdirAll(logFilesPath, 0644)
+	err := initConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.MkdirAll(config.LogFilesPath, 0644)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	initLogFile()
+	err = initLogFile()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	log.SetFormatter(logFormat)
 	//multiWriter := io.MultiWriter(os.Stderr, logFile)
@@ -28,7 +36,7 @@ func init() {
 
 	initTemplate()
 
-	go httpServer(listenAddress)
+	go httpServer(config.HttpListenAddr)
 
 	c = cron.New()
 }
@@ -37,7 +45,7 @@ func initJobs() error {
 	log := log.WithField("job", "core")
 
 	log.Infoln("Reading jobs...")
-	err := filepath.Walk("jobs.d", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(config.JobConfigsPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
