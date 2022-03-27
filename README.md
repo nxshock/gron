@@ -4,7 +4,7 @@
 
 ## Usage
 
-1. Create `jobs.d` directory
+1. Create `gron.d` directory
 2. Create job config in `jobs.d/job1.conf` ([TOML](https://en.wikipedia.org/wiki/TOML) format):
     ```toml
     Cron        = "* * * * *"                # cron instructions
