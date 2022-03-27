@@ -192,7 +192,7 @@
 				</td>
 				<td class="smaller">{{.Description}}</td>
 				<td class="nowrap" align="right">{{.Cron}}</td>
-				<td>{{if gt .CurrentRunningCount 1}}running {{.CurrentRunningCount}} jobs{{else}}{{if
+				<td>{{if gt .CurrentRunningCount 1}}&#x25b6; running {{.CurrentRunningCount}} jobs{{else}}{{if
 					.CurrentRunningCount}}running{{end}}{{end}}</td>
 				<td>{{.LastStartTime}}</td>
 				<td>{{.LastEndTime}}</td>
