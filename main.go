@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	formatter "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,7 +29,11 @@ func init() {
 		log.Fatalln(err)
 	}
 
-	log.SetFormatter(logFormat)
+	log.SetFormatter(&formatter.Formatter{
+		TimestampFormat: config.TimeFormat,
+		HideKeys:        true,
+		NoColors:        true,
+		TrimMessages:    true})
 	//multiWriter := io.MultiWriter(os.Stderr, logFile)
 	//log.SetOutput(multiWriter)
 	log.SetOutput(logFile)

@@ -80,7 +80,7 @@ func (j *Job) Run() {
 
 	l := log.New()
 	l.SetOutput(jobLogFile)
-	l.SetFormatter(logFormat)
+	l.SetFormatter(log.StandardLogger().Formatter)
 
 	log.WithField("job", j.FileName).Info("started")
 	l.Info("started")
