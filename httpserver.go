@@ -33,8 +33,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	jobEntries := c.Entries()
 	var jobs []*Job
-	for _, v := range jobEntries {
-		jobs = append(jobs, v.Job.(*Job))
+	for _, jobEntry := range jobEntries {
+		job := jobEntry.Job.(*Job)
+		job.NextLaunch = jobEntry.Next.Format(config.TimeFormat)
+		jobs = append(jobs, job)
 	}
 	indexTemplate.ExecuteTemplate(buf, "index", jobs)
 	globalMutex.RUnlock()

@@ -193,6 +193,7 @@
 				<th>Start time</th>
 				<th>Finish time</th>
 				<th>Duration</th>
+				<th>Next launch</th>
 				<th>Last error</th>
 			</tr>
 			{{range .}}<tr>
@@ -208,6 +209,7 @@
 				<td>{{.LastStartTime}}</td>
 				<td>{{.LastEndTime}}</td>
 				<td align="right">{{.LastExecutionDuration}}</td>
+				<td>{{.NextLaunch}}</td>
 				<td class="smaller red">{{.LastError}}</td>
 			</tr>{{end}}
 		</table>

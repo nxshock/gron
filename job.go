@@ -20,6 +20,24 @@ type JobConfig struct {
 	Description string
 }
 
+type Job struct {
+	Name string // from filename
+
+	Cron        string   // cron decription
+	Command     string   // command for execution
+	Params      []string // command params
+	FileName    string   // short job name
+	Description string   // job description
+
+	// Fields for stats
+	CurrentRunningCount   int
+	LastStartTime         string
+	LastEndTime           string
+	LastExecutionDuration string
+	LastError             string
+	NextLaunch            string
+}
+
 var globalMutex sync.RWMutex
 
 func readJob(filePath string) (*Job, error) {
@@ -47,23 +65,6 @@ func (js *JobConfig) Write() {
 	buf := new(bytes.Buffer)
 	toml.NewEncoder(buf).Encode(*js)
 	ioutil.WriteFile("job.conf", buf.Bytes(), 0644)
-}
-
-type Job struct {
-	Name string // from filename
-
-	Cron        string   // cron decription
-	Command     string   // command for execution
-	Params      []string // command params
-	FileName    string   // short job name
-	Description string   // job description
-
-	// Fields for stats
-	CurrentRunningCount   int
-	LastStartTime         string
-	LastEndTime           string
-	LastExecutionDuration string
-	LastError             string
 }
 
 func (j *Job) Run() {
