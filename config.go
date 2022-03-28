@@ -12,7 +12,7 @@ import (
 var config Config
 
 type Config struct {
-	TimeFormat     string `default:"02.01.2006 15:04:05"`
+	TimeFormat     string `default:"02.01.2006 15:04"`
 	JobConfigsPath string `default:"gron.d"`
 	LogFilePath    string `default:"gron.log"` // core log file path
 	LogFilesPath   string `default:"logs"`     // job log files path
