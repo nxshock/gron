@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,12 +12,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+//go:embed font.ttf
+var font []byte
+
 func httpServer(listenAddress string) {
 	if listenAddress == "none" {
 		return
 	}
 
 	http.HandleFunc("/", handler)
+	http.HandleFunc("/font.ttf", handleFont)
 	http.HandleFunc("/reloadJobs", handleReloadJobs)
 	http.HandleFunc("/shutdown", handleShutdown)
 	http.HandleFunc("/start", handleForceStart)
@@ -101,4 +106,10 @@ func handleReloadJobs(w http.ResponseWriter, r *http.Request) {
 	c.Start()
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
+func handleFont(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "font/ttf")
+	w.Header().Add("Cache-Control", "public") // TODO
+	w.Write(font)
 }
