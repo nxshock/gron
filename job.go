@@ -81,7 +81,6 @@ func (j *Job) Run() {
 	j.LastStartTime = startTime.Format(config.TimeFormat)
 	globalMutex.Unlock()
 
-	jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	defer jobLogFile.Close()
 	defer jobLogFile.WriteString("\n")
 
@@ -97,6 +96,7 @@ func (j *Job) Run() {
 	cmd := exec.Command(command, params...)
 	cmd.Stdout = jobLogFile
 	cmd.Stderr = jobLogFile
+		jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 
 	err := cmd.Run()
 	if err != nil {
