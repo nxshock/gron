@@ -14,20 +14,17 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// JobConfig is a TOML representation of job
 type JobConfig struct {
-	Cron        string
-	Command     string
-	Description string
+	Cron        string // cron decription
+	Command     string // command for execution
+	Description string // job description
 }
 
 type Job struct {
 	Name string // from filename
 
-	Cron        string   // cron decription
-	Command     string   // command for execution
-	Params      []string // command params
-	FileName    string   // short job name
-	Description string   // job description
+	JobConfig
 
 	// Fields for stats
 	CurrentRunningCount   int
@@ -48,15 +45,9 @@ func readJob(filePath string) (*Job, error) {
 		return nil, err
 	}
 
-	command, params := parseCommand(jobConfig.Command)
-
 	job := &Job{
-		Name:        strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath)),
-		Cron:        jobConfig.Cron,
-		Command:     command,
-		Params:      params,
-		FileName:    strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filepath.Base(filePath))),
-		Description: jobConfig.Description}
+		Name:      strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath)),
+		JobConfig: jobConfig}
 
 	return job, nil
 }
@@ -67,6 +58,21 @@ func (js *JobConfig) Write() {
 	ioutil.WriteFile("job.conf", buf.Bytes(), 0644)
 }
 
+func (j *Job) CommandAndParams() (command string, params []string) {
+	quoted := false
+	items := strings.FieldsFunc(j.JobConfig.Command, func(r rune) bool {
+		if r == '"' {
+			quoted = !quoted
+		}
+		return !quoted && r == ' '
+	})
+	for i := range items {
+		items[i] = strings.Trim(items[i], `"`)
+	}
+
+	return items[0], items[1:]
+}
+
 func (j *Job) Run() {
 	startTime := time.Now()
 
@@ -75,7 +81,7 @@ func (j *Job) Run() {
 	j.LastStartTime = startTime.Format(config.TimeFormat)
 	globalMutex.Unlock()
 
-	jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.FileName+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".txt"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	defer jobLogFile.Close()
 	defer jobLogFile.WriteString("\n")
 
@@ -83,17 +89,19 @@ func (j *Job) Run() {
 	l.SetOutput(jobLogFile)
 	l.SetFormatter(log.StandardLogger().Formatter)
 
-	log.WithField("job", j.FileName).Info("started")
+	log.WithField("job", j.Name).Info("started")
 	l.Info("started")
 
-	cmd := exec.Command(j.Command, j.Params...)
+	command, params := j.CommandAndParams()
+
+	cmd := exec.Command(command, params...)
 	cmd.Stdout = jobLogFile
 	cmd.Stderr = jobLogFile
 
 	err := cmd.Run()
 	if err != nil {
-		log.WithField("job", j.FileName).Error(err.Error())
-		l.WithField("job", j.FileName).Error(err.Error())
+		log.WithField("job", j.Name).Error(err.Error())
+		l.WithField("job", j.Name).Error(err.Error())
 
 		globalMutex.Lock()
 		j.LastError = err.Error()
@@ -105,7 +113,7 @@ func (j *Job) Run() {
 	}
 
 	endTime := time.Now()
-	log.WithField("job", j.FileName).Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
+	log.WithField("job", j.Name).Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
 	l.Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
 
 	globalMutex.Lock()
