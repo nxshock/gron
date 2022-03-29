@@ -70,8 +70,10 @@ func (j *Job) commandAndParams() (command string, params []string) {
 	return items[0], items[1:]
 }
 
-func (j *Job) Run() {
-	jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+// logEntry - logger which merged with main logger,
+// jobLogFile - job log file with needs to be closed after job is done
+func (j *Job) openAndMergeLog() (logEntry *log.Entry, jobLogFile *os.File) {
+	jobLogFile, _ = os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644) // TODO: handle error
 	jobLogFile.WriteString("\n")
 
 	logWriter := io.MultiWriter(logFile, jobLogFile)
@@ -83,10 +85,17 @@ func (j *Job) Run() {
 		NoColors:        true,
 		TrimMessages:    true})
 	log.SetOutput(logWriter)
-	logEntry := log.WithField("job", j.Name)
+	logEntry = log.WithField("job", j.Name)
+
+	return logEntry, jobLogFile
+}
+
+func (j *Job) Run() {
+	log, jobLogFile := j.openAndMergeLog()
+	defer jobLogFile.Close()
 
 	for i := 0; i < j.JobConfig.NumberOfRestartAttemts+1; i++ {
-		logEntry.Info("Started.")
+		log.Info("Started.")
 		startTime := time.Now()
 
 		globalMutex.Lock()
@@ -94,7 +103,6 @@ func (j *Job) Run() {
 		j.LastStartTime = startTime.Format(config.TimeFormat)
 		globalMutex.Unlock()
 
-		/**/
 		command, params := j.commandAndParams()
 
 		cmd := exec.Command(command, params...)
@@ -103,7 +111,7 @@ func (j *Job) Run() {
 
 		err := cmd.Run()
 		if err != nil {
-			logEntry.Error(err.Error())
+			log.Error(err.Error())
 
 			globalMutex.Lock()
 			j.LastError = err.Error()
@@ -115,7 +123,7 @@ func (j *Job) Run() {
 		}
 
 		endTime := time.Now()
-		logEntry.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
+		log.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
 
 		globalMutex.Lock()
 		j.CurrentRunningCount--
@@ -132,15 +140,13 @@ func (j *Job) Run() {
 		}
 
 		if i == 0 {
-			logEntry.Printf("Job failed, restarting in %d seconds.", j.JobConfig.RestartSec)
+			log.Printf("Job failed, restarting in %d seconds.", j.JobConfig.RestartSec)
 		} else if i+1 < j.JobConfig.NumberOfRestartAttemts {
-			logEntry.Printf("Retry attempt №%d of %d failed, restarting in %d seconds.", i, j.JobConfig.NumberOfRestartAttemts, j.JobConfig.RestartSec)
+			log.Printf("Retry attempt №%d of %d failed, restarting in %d seconds.", i, j.JobConfig.NumberOfRestartAttemts, j.JobConfig.RestartSec)
 		} else {
-			logEntry.Printf("Retry attempt №%d of %d failed.", i, j.JobConfig.NumberOfRestartAttemts)
+			log.Printf("Retry attempt №%d of %d failed.", i, j.JobConfig.NumberOfRestartAttemts)
 		}
 
 		time.Sleep(time.Duration(j.JobConfig.RestartSec) * time.Second)
-
 	}
-	jobLogFile.Close()
 }
