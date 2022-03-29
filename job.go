@@ -1,8 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,20 +10,24 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	formatter "github.com/antonfisher/nested-logrus-formatter"
 	log "github.com/sirupsen/logrus"
 )
 
 // JobConfig is a TOML representation of job
 type JobConfig struct {
-	Cron        string // cron decription
-	Command     string // command for execution
-	Description string // job description
+	Cron                   string // cron decription
+	Command                string // command for execution
+	Description            string // job description
+	NumberOfRestartAttemts int
+	RestartSec             int         // the time to sleep before restarting a job (seconds)
+	RestartRule            RestartRule // Configures whether the job shall be restarted when the job process exits
 }
 
 type Job struct {
 	Name string // from filename
 
-	JobConfig
+	JobConfig JobConfig
 
 	// Fields for stats
 	CurrentRunningCount   int
@@ -52,13 +55,7 @@ func readJob(filePath string) (*Job, error) {
 	return job, nil
 }
 
-func (js *JobConfig) Write() {
-	buf := new(bytes.Buffer)
-	toml.NewEncoder(buf).Encode(*js)
-	ioutil.WriteFile("job.conf", buf.Bytes(), 0644)
-}
-
-func (j *Job) CommandAndParams() (command string, params []string) {
+func (j *Job) commandAndParams() (command string, params []string) {
 	quoted := false
 	items := strings.FieldsFunc(j.JobConfig.Command, func(r rune) bool {
 		if r == '"' {
@@ -74,51 +71,76 @@ func (j *Job) CommandAndParams() (command string, params []string) {
 }
 
 func (j *Job) Run() {
-	startTime := time.Now()
+	jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	jobLogFile.WriteString("\n")
 
-	globalMutex.Lock()
-	j.CurrentRunningCount++
-	j.LastStartTime = startTime.Format(config.TimeFormat)
-	globalMutex.Unlock()
+	logWriter := io.MultiWriter(logFile, jobLogFile)
 
-	defer jobLogFile.Close()
-	defer jobLogFile.WriteString("\n")
+	log := log.New()
+	log.SetFormatter(&formatter.Formatter{
+		TimestampFormat: config.TimeFormat,
+		HideKeys:        true,
+		NoColors:        true,
+		TrimMessages:    true})
+	log.SetOutput(logWriter)
+	logEntry := log.WithField("job", j.Name)
 
-	l := log.New()
-	l.SetOutput(jobLogFile)
-	l.SetFormatter(log.StandardLogger().Formatter)
-
-	log.WithField("job", j.Name).Info("started")
-	l.Info("started")
-
-	command, params := j.CommandAndParams()
-
-	cmd := exec.Command(command, params...)
-	cmd.Stdout = jobLogFile
-	cmd.Stderr = jobLogFile
-		jobLogFile, _ := os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-
-	err := cmd.Run()
-	if err != nil {
-		log.WithField("job", j.Name).Error(err.Error())
-		l.WithField("job", j.Name).Error(err.Error())
+	for i := 0; i < j.JobConfig.NumberOfRestartAttemts+1; i++ {
+		logEntry.Info("Started.")
+		startTime := time.Now()
 
 		globalMutex.Lock()
-		j.LastError = err.Error()
+		j.CurrentRunningCount++
+		j.LastStartTime = startTime.Format(config.TimeFormat)
 		globalMutex.Unlock()
-	} else {
+
+		/**/
+		command, params := j.commandAndParams()
+
+		cmd := exec.Command(command, params...)
+		cmd.Stdout = jobLogFile
+		cmd.Stderr = jobLogFile
+
+		err := cmd.Run()
+		if err != nil {
+			logEntry.Error(err.Error())
+
+			globalMutex.Lock()
+			j.LastError = err.Error()
+			globalMutex.Unlock()
+		} else {
+			globalMutex.Lock()
+			j.LastError = ""
+			globalMutex.Unlock()
+		}
+
+		endTime := time.Now()
+		logEntry.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
+
 		globalMutex.Lock()
-		j.LastError = ""
+		j.CurrentRunningCount--
+		j.LastEndTime = endTime.Format(config.TimeFormat)
+		j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
 		globalMutex.Unlock()
+
+		if err == nil {
+			break
+		}
+
+		if j.JobConfig.RestartRule == No || j.JobConfig.NumberOfRestartAttemts == 0 {
+			break
+		}
+
+		if i == 0 {
+			logEntry.Printf("Job failed, restarting in %d seconds.", j.JobConfig.RestartSec)
+		} else if i+1 < j.JobConfig.NumberOfRestartAttemts {
+			logEntry.Printf("Retry attempt №%d of %d failed, restarting in %d seconds.", i, j.JobConfig.NumberOfRestartAttemts, j.JobConfig.RestartSec)
+		} else {
+			logEntry.Printf("Retry attempt №%d of %d failed.", i, j.JobConfig.NumberOfRestartAttemts)
+		}
+
+		time.Sleep(time.Duration(j.JobConfig.RestartSec) * time.Second)
+
 	}
-
-	endTime := time.Now()
-	log.WithField("job", j.Name).Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
-	l.Infof("finished (%s)", endTime.Sub(startTime).Truncate(time.Second).String())
-
-	globalMutex.Lock()
-	j.CurrentRunningCount--
-	j.LastEndTime = endTime.Format(config.TimeFormat)
-	j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
-	globalMutex.Unlock()
+	jobLogFile.Close()
 }

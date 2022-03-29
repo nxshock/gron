@@ -64,7 +64,7 @@ func initJobs() error {
 				return err
 			}
 
-			_, err = c.AddJob(job.Cron, job)
+			_, err = c.AddJob(job.JobConfig.Cron, job)
 			if err != nil {
 				return err
 			}

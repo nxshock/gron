@@ -207,9 +207,9 @@
 					<form action="/start" method="get" id="form-{{.Name}}"></form>
 					<button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg" {{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}" {{if gt .CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
 				</td>
-				<td class="smaller">{{.Description}}</td>
+				<td class="smaller">{{.JobConfig.Description}}</td>
 				<td class="nowrap" align="right">
-					<pre>{{.Cron}}</pre>
+					<pre>{{.JobConfig.Cron}}</pre>
 				</td>
 				<td class="nowrap">{{if gt .CurrentRunningCount 1}}<span class="red">running {{.CurrentRunningCount}} jobs</span>{{else}}{{if .CurrentRunningCount}}<span class="green">&#x25b6; running</span>{{else}}&#x25fc; inactive{{end}}{{end}}</td>
 				<td>{{.LastStartTime}}</td>

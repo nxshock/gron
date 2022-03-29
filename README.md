@@ -1,6 +1,6 @@
 # gron
 
-*cron-like job scheduler*
+*SystemD and cron inspired job scheduler*
 
 ## Usage
 
