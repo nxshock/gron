@@ -65,7 +65,7 @@ func handleForceStart(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				host = r.RemoteAddr
 			}
-			log.WithField("job", "http_server").Printf("forced start %s from %s", job.Name, host)
+			log.WithField("job", "http_server").Printf("Forced start %s from %s.", job.Name, host)
 			go job.Run()
 			time.Sleep(time.Second / 4) // wait some time for job start
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
