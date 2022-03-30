@@ -30,6 +30,7 @@ type Job struct {
 	JobConfig JobConfig
 
 	// Fields for stats
+	Status                Status
 	CurrentRunningCount   int
 	LastStartTime         string
 	LastEndTime           string
@@ -50,6 +51,7 @@ func readJob(filePath string) (*Job, error) {
 
 	job := &Job{
 		Name:      strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath)),
+		Status:    Inactive,
 		JobConfig: jobConfig}
 
 	return job, nil
@@ -100,6 +102,7 @@ func (j *Job) Run() {
 
 		globalMutex.Lock()
 		j.CurrentRunningCount++
+		j.Status = Running
 		j.LastStartTime = startTime.Format(config.TimeFormat)
 		globalMutex.Unlock()
 
@@ -111,12 +114,14 @@ func (j *Job) Run() {
 
 		err := cmd.Run()
 		if err != nil {
+			j.Status = Error
 			log.Error(err.Error())
 
 			globalMutex.Lock()
 			j.LastError = err.Error()
 			globalMutex.Unlock()
 		} else {
+			j.Status = Inactive
 			globalMutex.Lock()
 			j.LastError = ""
 			globalMutex.Unlock()
@@ -141,7 +146,9 @@ func (j *Job) Run() {
 
 		if i == 0 {
 			log.Printf("Job failed, restarting in %d seconds.", j.JobConfig.RestartSec)
-		} else if i+1 < j.JobConfig.NumberOfRestartAttemts {
+			j.Status = Restarting
+		} else if i < j.JobConfig.NumberOfRestartAttemts {
+			j.Status = Restarting
 			log.Printf("Retry attempt №%d of %d failed, restarting in %d seconds.", i, j.JobConfig.NumberOfRestartAttemts, j.JobConfig.RestartSec)
 		} else {
 			log.Printf("Retry attempt №%d of %d failed.", i, j.JobConfig.NumberOfRestartAttemts)

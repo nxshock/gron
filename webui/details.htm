@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>gron</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <main>
+        <a class="dropdown dropbtn" href="/" class="dropbtn">&#x2190; Back</a>
+        <h1>{{.Name}}</h1>
+        <table class="stats">
+            <tr>
+                <td>Description</td>
+                <td>{{.JobConfig.Description}}</td>
+            </tr>
+            <tr>
+                <td>Cron</td>
+                <td><pre>{{.JobConfig.Cron}}</pre></td>
+                </td>
+                <tr>
+                    <td>Command</td>
+                    <td><pre>{{.JobConfig.Command}}</pre></td>
+                </tr>
+                <tr>
+                    <td>Status</td>
+                    <td>{{if eq .Status 0}}&#x2bc0; inactive{{end}}{{if eq .Status 1}}<span class="green">&#x2bc8; running</span>{{end}}{{if eq .Status 2}}<span class="red">&#x2bc1; error</span>{{end}}{{if eq .Status 3}}<span class="orange">&#x27f3; restarting</span>{{end}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <h2>Stats</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Start time</td>
+                    <td>{{.LastStartTime}}</td>
+                </tr>
+                <tr>
+                    <td>Finish time</td>
+                    <td>{{.LastEndTime}}</td>
+                </tr>
+                <tr>
+                    <td>Duration</td>
+                    <td>{{.LastExecutionDuration}}</td>
+                </tr>
+                <tr>
+                    <td>Last error</td>
+                    <td><pre class="red">{{.LastError}}</pre></td>
+                </tr>
+                <tr>
+                    <td>Next launch</td>
+                    <td>{{.NextLaunch}}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <h2>On error action</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Restart rule</td>
+                    <td>{{if eq .JobConfig.RestartRule 0}}no restart{{end}}{{if eq .JobConfig.RestartRule 1}}restart on error{{end}}</td>
+                </tr>
+                <tr>
+                    <td>Number of restart attempts</td>
+                    <td>{{.JobConfig.NumberOfRestartAttemts}}</td>
+                </tr>
+                <tr>
+                    <td>Restart delay</td>
+                    <td>{{if eq .JobConfig.RestartSec 0}}none{{else}}{{.JobConfig.RestartSec}} sec{{end}}</td>
+                </tr>
+        </table>
+    </main>
+</body>
+
+</html>

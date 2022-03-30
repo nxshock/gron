@@ -1,20 +1,20 @@
 package main
 
 import (
-	_ "embed"
+	"embed"
 	"html/template"
 
 	log "github.com/sirupsen/logrus"
 )
 
-//go:embed index.htm
-var indexTemplateStr string
+//go:embed webui/*
+var siteFS embed.FS
 
-var indexTemplate *template.Template
+var templates *template.Template
 
 func initTemplate() {
 	var err error
-	indexTemplate, err = template.New("index").Parse(indexTemplateStr) // TODO: optimize
+	templates, err = template.ParseFS(siteFS, "webui/*.htm")
 	if err != nil {
 		log.Fatalln("init template error:", err)
 	}

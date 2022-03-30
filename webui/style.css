@@ -1,0 +1,203 @@
+/* Based on base16 architecture for building themes
+   https://github.com/chriskempson/base16 */
+
+ :root {
+    /* Default Background */
+    --base00: #282c34;
+    /* Lighter Background */
+    --base01: #353b45;
+    /* Selection Background */
+    --base02: #3e4451;
+    /* Comments, Invisibles, Line Highlighting */
+    --base03: #545862;
+    /* Dark Foreground (Used for status bars) */
+    --base04: #565c64;
+    /* Default Foreground, Caret, Delimiters, Operators */
+    --base05: #abb2bf;
+    /* Light Foreground (Not often used) */
+    --base06: #b6bdca;
+    /* Light Background (Not often used) */
+    --base07: #c8ccd4;
+    /* Red */
+    --base08: #e06c75;
+    /* Orange */
+    --base09: #d19a66;
+    /* Yellow */
+    --base0A: #e5c07b;
+    /* Green */
+    --base0B: #98c379;
+    /* Aqua */
+    --base0C: #56b6c2;
+    /* Blue */
+    --base0D: #61afef;
+    /* Purple */
+    --base0E: #c678dd;
+    /* Dark red */
+    --base0F: #be5046;
+}
+
+@font-face {
+    font-family: Roboto;
+    src: url('/font.ttf');
+}
+
+* {
+    font-family: Roboto;
+    font-size: 14px;
+    color: var(--base05);
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    height: 100%
+}
+
+body {
+    background-color: var(--base00);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    height: 100%;
+}
+
+h1 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-size: 150%;
+}
+
+h2 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-size: 125%;
+}
+
+h1,
+h2 {
+    color: var(--base0D);
+    font-weight: bold;
+}
+
+main {
+    flex-grow: 1;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+a {
+    text-decoration: none;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th {
+    background-color: var(--base01);
+}
+
+td,
+th {
+    border: 1px solid var(--base01);
+    padding: 0.25em;
+}
+
+table button {
+    width: 100%;
+    color: #fff;
+    background-color: var(--base01);
+    border: 0;
+    cursor: pointer;
+    padding: 0.25em;
+}
+
+form {
+    display: none;
+}
+
+pre {
+    font-family: "Consolas";
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.centered {
+    text-align: center;
+}
+
+.smaller {
+    font-size: 80%;
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
+.errorbg {
+    background-color: var(--base08);
+}
+
+.runningbg {
+    background-color: var(--base0B);
+}
+
+.dropbtn {
+    background-color: var(--base01);
+    color: var(--base05);
+    padding: 0.5em;
+    cursor: pointer;
+    border: 0;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+    float: right;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: var(--base01);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: var(--base05);
+    padding: 0.5em;
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.green {
+    color: var(--base0B);
+}
+
+.orange {
+    color: var(--base09);
+}
+
+.red {
+    color: var(--base08);
+}
+
+table.stats td {
+    border-top: 1px solid var(--base01);
+    border-bottom: 1px solid var(--base01);
+    border-left: 0;
+    border-right: 0;
+}
+
+table.stats td:first-child {
+    font-weight: bold;
+}

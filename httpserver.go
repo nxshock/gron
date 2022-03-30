@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -12,25 +13,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-//go:embed font.ttf
-var font []byte
-
 func httpServer(listenAddress string) {
 	if listenAddress == "none" {
 		return
 	}
 
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/font.ttf", handleFont)
 	http.HandleFunc("/reloadJobs", handleReloadJobs)
 	http.HandleFunc("/shutdown", handleShutdown)
 	http.HandleFunc("/start", handleForceStart)
+	http.HandleFunc("/details", handleDetails)
 	log.WithField("job", "http_server").Fatal(http.ListenAndServe(listenAddress, nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	if r.RequestURI != "/" {
-		http.Error(w, "", http.StatusNotFound)
+		fs, err := fs.Sub(siteFS, "webui")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.FileServer(http.FS(fs)).ServeHTTP(w, r)
 		return
 	}
 
@@ -43,7 +46,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		job.NextLaunch = jobEntry.Next.Format(config.TimeFormat)
 		jobs = append(jobs, job)
 	}
-	indexTemplate.ExecuteTemplate(buf, "index", jobs)
+	templates.ExecuteTemplate(buf, "index.htm", jobs)
 	globalMutex.RUnlock()
 
 	buf.WriteTo(w)
@@ -108,8 +111,25 @@ func handleReloadJobs(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func handleFont(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "font/ttf")
-	w.Header().Add("Cache-Control", "public") // TODO
-	w.Write(font)
+func handleDetails(w http.ResponseWriter, r *http.Request) {
+	jobName := r.FormValue("jobName")
+	if jobName == "" {
+		http.Error(w, "job name is not specified", http.StatusBadRequest)
+		return
+	}
+
+	jobEntries := c.Entries()
+
+	for _, jobEntry := range jobEntries {
+		job := jobEntry.Job.(*Job)
+		if job.Name == jobName {
+			err := templates.ExecuteTemplate(w, "details.htm", job)
+			if err != nil {
+				fmt.Println(err)
+			}
+			return
+		}
+	}
+
+	http.Error(w, fmt.Sprintf("there is no job with name %s", jobName), http.StatusBadRequest)
 }

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>gron</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <main>
+        <div class="dropdown">
+            <button class="dropbtn">☰ Menu</button>
+            <div class="dropdown-content">
+                <a href="/reloadJobs">&#x27f3; Reload jobs</a>
+                <a>
+                    <hr>
+                </a>
+                <a href="/shutdown">&#x23fb; Shutdown</a>
+            </div>
+        </div>
+        <h1>Job list</h1>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Cron</th>
+                <th>Status</th>
+                <th>Start time</th>
+                <th>Finish time</th>
+                <th>Duration</th>
+                <th>Next launch</th>
+                <th>Details</th>
+            </tr>
+            {{range .}}
+            <tr>
+                <td class="no-padding">
+                    <form action="/start" method="get" id="form-{{.Name}}"></form>
+                    <button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg" {{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}" {{if gt .CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
+                </td>
+                <td class="smaller">{{.JobConfig.Description}}</td>
+                <td class="nowrap" align="right">
+                    <pre>{{.JobConfig.Cron}}</pre>
+                </td>
+                <td class="nowrap">{{if eq .Status 0}}&#x2bc0; inactive{{end}}{{if eq .Status 1}}<span class="green">&#x2bc8; running</span>{{end}}{{if eq .Status 2}}<span class="red">&#x2bc1; error</span>{{end}}{{if eq .Status 3}}<span class="orange">&#x27f3; restarting</span>{{end}}</td>
+                <td>{{.LastStartTime}}</td>
+                <td>{{.LastEndTime}}</td>
+                <td align="right">{{.LastExecutionDuration}}</td>
+                <td>{{.NextLaunch}}</td>
+                <td class="centered"><a href="/details?jobName={{.Name}}">open</a></td>
+            </tr>{{end}}
+        </table>
+    </main>
+</body>
+
+</html>
