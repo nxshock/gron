@@ -5,7 +5,7 @@
 ## Usage
 
 1. Create `gron.d` directory
-2. Create job config in `jobs.d/job1.conf` ([TOML](https://en.wikipedia.org/wiki/TOML) format):
+2. Create job config in `gron.d/job1.conf` ([TOML](https://en.wikipedia.org/wiki/TOML) format):
     ```toml
     Cron                   = "* * * * *"                # cron instructions
     Command                = "echo Hello"               # command to execute
