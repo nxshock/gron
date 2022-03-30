@@ -211,7 +211,7 @@
 				<td class="nowrap" align="right">
 					<pre>{{.JobConfig.Cron}}</pre>
 				</td>
-				<td class="nowrap">{{if gt .CurrentRunningCount 1}}<span class="red">running {{.CurrentRunningCount}} jobs</span>{{else}}{{if .CurrentRunningCount}}<span class="green">&#x25b6; running</span>{{else}}&#x25fc; inactive{{end}}{{end}}</td>
+				<td class="nowrap">{{if gt .CurrentRunningCount 1}}<span class="red">&#x2bc1; running {{.CurrentRunningCount}} jobs</span>{{else}}{{if .CurrentRunningCount}}<span class="green">&#x2bc8; running</span>{{else}}&#x2bc0; inactive{{end}}{{end}}</td>
 				<td>{{.LastStartTime}}</td>
 				<td>{{.LastEndTime}}</td>
 				<td align="right">{{.LastExecutionDuration}}</td>
