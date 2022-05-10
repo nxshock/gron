@@ -118,45 +118,7 @@ func (j *Job) Run() {
 	defer jobLogFile.Close()
 
 	for i := 0; i < j.JobConfig.NumberOfRestartAttemts+1; i++ {
-		log.Info("Started.")
-		startTime := time.Now()
-
-		globalMutex.Lock()
-		j.CurrentRunningCount++
-		j.Status = Running
-		j.LastStartTime = startTime.Format(config.TimeFormat)
-		globalMutex.Unlock()
-
-		var err error
-		switch j.JobConfig.Type {
-		case Cmd:
-			err = j.runCmd(jobLogFile)
-		case Sql:
-			err = j.runSql(jobLogFile)
-		}
-		if err != nil {
-			j.Status = Error
-			log.Error(err.Error())
-
-			globalMutex.Lock()
-			j.LastError = err.Error()
-			globalMutex.Unlock()
-		} else {
-			j.Status = Inactive
-			globalMutex.Lock()
-			j.LastError = ""
-			globalMutex.Unlock()
-		}
-
-		endTime := time.Now()
-		log.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
-
-		globalMutex.Lock()
-		j.CurrentRunningCount--
-		j.LastEndTime = endTime.Format(config.TimeFormat)
-		j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
-		globalMutex.Unlock()
-
+		err := j.runTry(log, jobLogFile)
 		if err == nil {
 			break
 		}
@@ -177,6 +139,49 @@ func (j *Job) Run() {
 
 		time.Sleep(time.Duration(j.JobConfig.RestartSec) * time.Second)
 	}
+}
+
+func (j *Job) runTry(log *log.Entry, jobLogFile *os.File) error {
+	log.Info("Started.")
+	startTime := time.Now()
+
+	globalMutex.Lock()
+	j.CurrentRunningCount++
+	j.Status = Running
+	j.LastStartTime = startTime.Format(config.TimeFormat)
+	globalMutex.Unlock()
+
+	var err error
+	switch j.JobConfig.Type {
+	case Cmd:
+		err = j.runCmd(jobLogFile)
+	case Sql:
+		err = j.runSql(jobLogFile)
+	}
+	if err != nil {
+		j.Status = Error
+		log.Error(err.Error())
+
+		globalMutex.Lock()
+		j.LastError = err.Error()
+		globalMutex.Unlock()
+	} else {
+		j.Status = Inactive
+		globalMutex.Lock()
+		j.LastError = ""
+		globalMutex.Unlock()
+	}
+
+	endTime := time.Now()
+	log.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
+
+	globalMutex.Lock()
+	j.CurrentRunningCount--
+	j.LastEndTime = endTime.Format(config.TimeFormat)
+	j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
+	globalMutex.Unlock()
+
+	return err
 }
 
 func (j *Job) runCmd(jobLogFile *os.File) error {
