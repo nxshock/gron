@@ -10,6 +10,7 @@ func TestReadJob(t *testing.T) {
 	expectedJob := &Job{
 		Name: "job",
 		JobConfig: JobConfig{
+			Type:                   Cmd,
 			Cron:                   "* * * * *",
 			Command:                `command "param1 param1" param2`,
 			Description:            "comment",

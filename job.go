@@ -1,6 +1,9 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -16,8 +19,18 @@ import (
 
 // JobConfig is a TOML representation of job
 type JobConfig struct {
+	Type JobType
+
+	// JobType = Cmd
+	Command string // command for execution
+
+	// JobType = Sql
+	Driver           string
+	ConnectionString string
+	SqlText          string
+
+	// Other fields
 	Cron                   string // cron decription
-	Command                string // command for execution
 	Description            string // job description
 	NumberOfRestartAttemts int
 	RestartSec             int         // the time to sleep before restarting a job (seconds)
@@ -47,6 +60,14 @@ func readJob(filePath string) (*Job, error) {
 	_, err := toml.DecodeFile(filePath, &jobConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	if jobConfig.Type <= 0 {
+		return nil, errors.New("job type is not specified")
+	}
+
+	if jobConfig.Type > 2 {
+		return nil, fmt.Errorf("unknown job type id: %v", int(jobConfig.Type)) // TODO: add job name to log
 	}
 
 	job := &Job{
@@ -106,13 +127,13 @@ func (j *Job) Run() {
 		j.LastStartTime = startTime.Format(config.TimeFormat)
 		globalMutex.Unlock()
 
-		command, params := j.commandAndParams()
-
-		cmd := exec.Command(command, params...)
-		cmd.Stdout = jobLogFile
-		cmd.Stderr = jobLogFile
-
-		err := cmd.Run()
+		var err error
+		switch j.JobConfig.Type {
+		case Cmd:
+			err = j.runCmd(jobLogFile)
+		case Sql:
+			err = j.runSql(jobLogFile)
+		}
 		if err != nil {
 			j.Status = Error
 			log.Error(err.Error())
@@ -156,4 +177,29 @@ func (j *Job) Run() {
 
 		time.Sleep(time.Duration(j.JobConfig.RestartSec) * time.Second)
 	}
+}
+
+func (j *Job) runCmd(jobLogFile *os.File) error {
+	command, params := j.commandAndParams()
+
+	cmd := exec.Command(command, params...)
+	cmd.Stdout = jobLogFile
+	cmd.Stderr = jobLogFile
+
+	return cmd.Run()
+}
+
+func (j *Job) runSql(jobLogFile *os.File) error {
+	db, err := sql.Open(j.JobConfig.Driver, j.JobConfig.ConnectionString)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	_, err = db.Exec(j.JobConfig.SqlText)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
