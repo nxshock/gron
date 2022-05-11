@@ -14,6 +14,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	formatter "github.com/antonfisher/nested-logrus-formatter"
+	mssql "github.com/denisenkom/go-mssqldb"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -99,7 +100,7 @@ func (j *Job) openAndMergeLog() (logEntry *log.Entry, jobLogFile *os.File) {
 	jobLogFile, _ = os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644) // TODO: handle error
 	jobLogFile.WriteString("\n")
 
-	logWriter := io.MultiWriter(logFile, jobLogFile)
+	logWriter := io.MultiWriter(mainLogFile, jobLogFile)
 
 	log := log.New()
 	log.SetFormatter(&formatter.Formatter{
@@ -200,6 +201,11 @@ func (j *Job) runSql(jobLogFile *os.File) error {
 		return err
 	}
 	defer db.Close()
+
+	msSqlDriver, ok := db.Driver().(*mssql.Driver)
+	if ok {
+		msSqlDriver.SetLogger(&logFile{jobLogFile})
+	}
 
 	_, err = db.Exec(j.JobConfig.SqlText)
 	if err != nil {

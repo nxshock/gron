@@ -36,7 +36,7 @@ func init() {
 		TrimMessages:    true})
 	//multiWriter := io.MultiWriter(os.Stderr, logFile)
 	//log.SetOutput(multiWriter)
-	log.SetOutput(logFile)
+	log.SetOutput(mainLogFile)
 	log.SetLevel(log.InfoLevel)
 
 	initTemplate()
@@ -103,7 +103,7 @@ func main() {
 
 	log.Info("Got stop signal.")
 
-	err = logFile.Close()
+	err = mainLogFile.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
