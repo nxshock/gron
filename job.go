@@ -14,7 +14,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	formatter "github.com/antonfisher/nested-logrus-formatter"
-	mssql "github.com/denisenkom/go-mssqldb"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -196,16 +195,21 @@ func (j *Job) runCmd(jobLogFile *os.File) error {
 }
 
 func (j *Job) runSql(jobLogFile *os.File) error {
-	db, err := sql.Open(j.JobConfig.Driver, j.JobConfig.ConnectionString)
+	var (
+		db  *sql.DB
+		err error
+	)
+
+	switch j.JobConfig.Driver {
+	case "mssql", "sqlserver":
+		db, err = openMsSqlDb(j.JobConfig.ConnectionString, jobLogFile)
+	default:
+		db, err = sql.Open(j.JobConfig.Driver, j.JobConfig.ConnectionString)
+	}
 	if err != nil {
 		return err
 	}
 	defer db.Close()
-
-	msSqlDriver, ok := db.Driver().(*mssql.Driver)
-	if ok {
-		msSqlDriver.SetLogger(&logFile{jobLogFile})
-	}
 
 	_, err = db.Exec(j.JobConfig.SqlText)
 	if err != nil {

@@ -23,6 +23,7 @@ require (
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.10.2 // indirect
+	github.com/nxshock/logwriter v0.0.0-20220512142427-c44d147b9c36 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
