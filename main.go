@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -34,9 +35,10 @@ func init() {
 		HideKeys:        true,
 		NoColors:        true,
 		TrimMessages:    true})
-	//multiWriter := io.MultiWriter(os.Stderr, logFile)
-	//log.SetOutput(multiWriter)
-	log.SetOutput(mainLogFile)
+
+	multiWriter := io.MultiWriter(os.Stderr, mainLogFile)
+	log.SetOutput(multiWriter)
+
 	log.SetLevel(log.InfoLevel)
 
 	initTemplate()
