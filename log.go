@@ -1,18 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/nxshock/logwriter"
 )
 
-type logFile struct{ file *os.File }
+type LogWriter struct{ w *logwriter.LogWriter }
 
-func (lf *logFile) Printf(format string, v ...interface{}) {
-	fmt.Fprintf(lf.file, format, v...)
+func (lw *LogWriter) Printf(format string, v ...interface{}) {
+	lw.w.Printf(format, v...)
 }
 
-func (lf *logFile) Println(v ...interface{}) {
-	fmt.Fprintln(lf.file, v...)
+func (lw *LogWriter) Println(v ...interface{}) {
+	lw.w.Println(v...)
 }
 
 var mainLogFile *os.File
