@@ -30,6 +30,9 @@
     NumberOfRestartAttemts = 3                          # number of restart attemts
     RestartSec             = 5                          # the time to sleep before restarting a job (seconds)
     RestartRule            = "on-error"                 # Configures whether the job shall be restarted when the job process exits
+
+    OnSuccessCmd           = "echo 'Job finished.'"              # execute cmd on job success
+    OnErrorCmd             = "echo 'Error occurred: $ErrorText'" # execute cmd on job error
     ```
 3. Launch `gron` binary
 4. HTTP interface available on http://127.0.0.1:9876

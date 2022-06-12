@@ -35,6 +35,9 @@ type JobConfig struct {
 	NumberOfRestartAttemts int
 	RestartSec             int         // the time to sleep before restarting a job (seconds)
 	RestartRule            RestartRule // Configures whether the job shall be restarted when the job process exits
+
+	OnSuccessCmd string
+	OnErrorCmd   string
 }
 
 type Job struct {
@@ -78,9 +81,9 @@ func readJob(filePath string) (*Job, error) {
 	return job, nil
 }
 
-func (j *Job) commandAndParams() (command string, params []string) {
+func splitCommandAndParams(s string) (command string, params []string) {
 	quoted := false
-	items := strings.FieldsFunc(j.JobConfig.Command, func(r rune) bool {
+	items := strings.FieldsFunc(s, func(r rune) bool {
 		if r == '"' {
 			quoted = !quoted
 		}
@@ -171,6 +174,7 @@ func (j *Job) runTry(log *log.Entry, jobLogFile *os.File) error {
 		j.LastError = ""
 		globalMutex.Unlock()
 	}
+	go j.runFinishCallback(err)
 
 	endTime := time.Now()
 	log.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
@@ -185,7 +189,7 @@ func (j *Job) runTry(log *log.Entry, jobLogFile *os.File) error {
 }
 
 func (j *Job) runCmd(jobLogFile *os.File) error {
-	command, params := j.commandAndParams()
+	command, params := splitCommandAndParams(j.JobConfig.Command)
 
 	cmd := exec.Command(command, params...)
 	cmd.Stdout = jobLogFile
@@ -217,4 +221,42 @@ func (j *Job) runSql(jobLogFile *os.File) error {
 	}
 
 	return nil
+}
+
+func (j *Job) runFinishCallback(err error) error {
+	s := j.JobConfig.OnSuccessCmd
+
+	// Fill variables
+	errStr := ""
+	if err != nil {
+		errStr = err.Error()
+	}
+	if err != nil {
+		s = strings.ReplaceAll(s, "$ErrorText", errStr)
+	}
+
+	if err == nil && j.JobConfig.OnSuccessCmd != "" {
+		log.Println("success")
+		cmd, params := splitCommandAndParams(s)
+		return runSimpleCmd(cmd, params...)
+	}
+
+	if err != nil && j.JobConfig.OnErrorCmd != "" {
+		log.Println("error")
+		cmd, params := splitCommandAndParams(s)
+		return runSimpleCmd(cmd, params...)
+	}
+
+	return nil
+}
+
+func runSimpleCmd(command string, args ...string) error {
+	log.Println(command)
+	log.Println(args)
+	err := exec.Command(command, args...).Run()
+	if err != nil {
+		log.Println(">>", err)
+	}
+
+	return err
 }
