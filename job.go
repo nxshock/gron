@@ -36,8 +36,17 @@ type JobConfig struct {
 	RestartSec             int         // the time to sleep before restarting a job (seconds)
 	RestartRule            RestartRule // Configures whether the job shall be restarted when the job process exits
 
+	OnSuccessMessageFmt string // Success message format
+	OnErrorMessageFmt   string // Error message format
+
 	OnSuccessCmd string
 	OnErrorCmd   string
+
+	OnSuccessHttpPostUrl string
+	OnErrorHttpPostUrl   string
+
+	OnSuccessHttpGetUrl string
+	OnErrorHttpGetUrl   string
 }
 
 type Job struct {
@@ -232,22 +241,69 @@ func (j *Job) runFinishCallback(err error) error {
 		errStr = err.Error()
 	}
 	if err != nil {
-		s = strings.ReplaceAll(s, "$ErrorText", errStr)
+		s = format(s, struct{ Error string }{Error: errStr})
 	}
 
 	if err == nil && j.JobConfig.OnSuccessCmd != "" {
-		log.Println("success")
 		cmd, params := splitCommandAndParams(s)
 		return runSimpleCmd(cmd, params...)
+	}
+
+	if err == nil && j.JobConfig.OnSuccessHttpPostUrl != "" {
+		httpPost(j.JobConfig.OnSuccessHttpPostUrl, j.successMessage()) // TODO: обработать ошибку
+	}
+
+	if err == nil && j.JobConfig.OnSuccessHttpGetUrl != "" {
+		httpGet(j.JobConfig.OnSuccessHttpPostUrl, j.Name, j.successMessage()) // TODO: обработать ошибку
 	}
 
 	if err != nil && j.JobConfig.OnErrorCmd != "" {
-		log.Println("error")
 		cmd, params := splitCommandAndParams(s)
 		return runSimpleCmd(cmd, params...)
 	}
 
+	if err != nil && j.JobConfig.OnErrorHttpPostUrl != "" {
+		httpPost(j.JobConfig.OnErrorHttpPostUrl, j.errorMessage(err)) // TODO: обработать ошибку
+	}
+
+	if err != nil && j.JobConfig.OnErrorHttpGetUrl != "" {
+		err2 := httpGet(j.JobConfig.OnErrorHttpGetUrl, j.Name, err.Error())
+		if err2 != nil {
+			log.Errorf("OnErrorHttpGetUrl error: %v", err2) // TODO: сделать формат сообщения по стандарту
+		}
+	}
+
 	return nil
+}
+
+func (j *Job) successMessage() string {
+	s := j.JobConfig.OnSuccessMessageFmt
+	if s == "" {
+		s = defaultOnSuccessMessageFmt
+	}
+
+	v := struct {
+		JobName string
+	}{
+		JobName: j.Name}
+
+	return format(s, v)
+}
+
+func (j *Job) errorMessage(err error) string {
+	s := j.JobConfig.OnErrorMessageFmt
+	if s == "" {
+		s = defaultOnErrorMessageFmt
+	}
+
+	v := struct {
+		JobName string
+		Error   string
+	}{
+		JobName: j.Name,
+		Error:   err.Error()}
+
+	return format(s, v)
 }
 
 func runSimpleCmd(command string, args ...string) error {

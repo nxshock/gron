@@ -17,6 +17,8 @@ type Config struct {
 	LogFilePath    string `default:"gron.log"` // core log file path
 	LogFilesPath   string `default:"logs"`     // job log files path
 	HttpListenAddr string `default:"127.0.0.1:9876"`
+
+	HttpProxyAddr string // proxy address for local http client
 }
 
 func initConfig() error {

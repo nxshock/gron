@@ -32,7 +32,17 @@
     RestartRule            = "on-error"                 # Configures whether the job shall be restarted when the job process exits
 
     OnSuccessCmd           = "echo 'Job finished.'"              # execute cmd on job success
-    OnErrorCmd             = "echo 'Error occurred: $ErrorText'" # execute cmd on job error
+    OnErrorCmd             = "echo 'Error occurred: {{.Error}}'" # execute cmd on job error
+
+
+	OnSuccessHttpGetUrl    = ""
+	OnErrorHttpGetUrl      = "http://127.0.0.1/alerts?title={{.JobName}}%20failed&message={{.Error}}&tags=warning"
+
+    OnSuccessHttpPostUrl   = "http://127.0.0.1/alerts"
+    OnSuccessMessageFmt    = "Job {{.JobName}} finished."
+
+    OnErrorHttpPostUrl     = "http://127.0.0.1/alerts"
+    OnErrorMessageFmt      = "Job {{.JobName}} failed:\n\n{{.Error}}"
     ```
 3. Launch `gron` binary
 4. HTTP interface available on http://127.0.0.1:9876
