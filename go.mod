@@ -6,11 +6,11 @@ require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/creasty/defaults v1.6.0
-	github.com/denisenkom/go-mssqldb v0.12.2
+	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/nxshock/logwriter v0.0.0-20220514172136-b1385d4106de
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sijms/go-ora/v2 v2.5.1
+	github.com/sijms/go-ora/v2 v2.5.3
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 )
@@ -27,10 +27,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sijms/go-ora v1.3.2 // indirect
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
-	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/crypto v0.0.0-20221012134737-56aed061732a // indirect
+	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
