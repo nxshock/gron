@@ -23,7 +23,7 @@
                 </td>
                 <tr>
                     <td>Command</td>
-                    <td><pre>{{.JobConfig.Command}}</pre></td>
+                    <td><pre>{{if eq .JobConfig.Type 1}}{{.JobConfig.Command}}{{else if eq .JobConfig.Type 2}}{{.JobConfig.SqlText}}{{end}}</pre></td>
                 </tr>
                 <tr>
                     <td>Status</td>

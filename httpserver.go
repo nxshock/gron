@@ -46,10 +46,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		job.NextLaunch = jobEntry.Next.Format(config.TimeFormat)
 		jobs = append(jobs, job)
 	}
-	templates.ExecuteTemplate(buf, "index.htm", jobs)
+	_ = templates.ExecuteTemplate(buf, "index.htm", jobs)
 	globalMutex.RUnlock()
 
-	buf.WriteTo(w)
+	_, _ = buf.WriteTo(w)
 }
 
 func handleForceStart(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func handleForceStart(w http.ResponseWriter, r *http.Request) {
 
 func handleShutdown(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Application terminated.\n"))
+	_, _ = w.Write([]byte("Application terminated.\n"))
 
 	go func() {
 		time.Sleep(time.Second)

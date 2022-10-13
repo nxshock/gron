@@ -33,12 +33,12 @@ func httpPost(addr string, text string) error {
 	}
 
 	resp, err := httpClient.Post(addr, "text/plain", strings.NewReader(text))
-	defer resp.Body.Close() // TODO: нужно ли закрывать Body при наличии ошибки?
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
-	return nil // TODO: вернуть ошибку Post при наличии
+	return nil
 }
 
 func httpGet(addrFmt, jobName, text string) error {
