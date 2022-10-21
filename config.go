@@ -31,7 +31,7 @@ func initConfig() error {
 		return fmt.Errorf("Usage: %s [path to config]", filepath.Base(ex))
 	}
 
-	configFilePath := defaultConfigFilePath
+	configFilePath := filepath.Join(filepath.Dir(ex), defaultConfigFileName)
 	if len(os.Args) == 2 {
 		configFilePath = os.Args[1]
 	}
