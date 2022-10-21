@@ -8,6 +8,7 @@
 2. Create job config in `gron.d/job1.conf` ([TOML](https://en.wikipedia.org/wiki/TOML) format):
     ```toml
     Type                   = "cmd"        # command execution
+    Category               = "Test jobs"  # jobs category name
     Cron                   = "* * * * *"  # cron instructions
 
     Command                = "echo Hello" # command to execute

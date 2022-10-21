@@ -20,7 +20,8 @@
                 <a href="/shutdown">&#x23fb; Shutdown</a>
             </div>
         </div>
-        <h1>Job list</h1>
+        {{range .Categories}}
+        <h2>{{if eq . ""}}Other jobs{{else}}{{.}}{{end}}</h2>
         <table>
             <tr>
                 <th>Name</th>
@@ -33,7 +34,7 @@
                 <th>Next launch</th>
                 <th>Details</th>
             </tr>
-            {{range .}}
+            {{range (index $.Jobs .)}}
             <tr>
                 <td class="no-padding">
                     <form action="/start" method="get" id="form-{{.Name}}"></form>
@@ -50,7 +51,7 @@
                 <td>{{.NextLaunch}}</td>
                 <td class="centered"><a href="/details?jobName={{.Name}}">open</a></td>
             </tr>{{end}}
-        </table>
+        </table>{{end}}
     </main>
 </body>
 

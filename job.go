@@ -21,6 +21,8 @@ import (
 type JobConfig struct {
 	Type JobType
 
+	Category string
+
 	// JobType = Cmd
 	Command string // command for execution
 

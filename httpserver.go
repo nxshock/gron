@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sort"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -40,13 +41,34 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	globalMutex.RLock()
 	buf := new(bytes.Buffer)
 	jobEntries := c.Entries()
-	var jobs []*Job
+
+	jobs := make(map[string][]*Job)
 	for _, jobEntry := range jobEntries {
 		job := jobEntry.Job.(*Job)
 		job.NextLaunch = jobEntry.Next.Format(config.TimeFormat)
-		jobs = append(jobs, job)
+		jobs[job.JobConfig.Category] = append(jobs[job.JobConfig.Category], job)
 	}
-	_ = templates.ExecuteTemplate(buf, "index.htm", jobs)
+
+	var keys []string
+	for k, v := range jobs {
+		keys = append(keys, k)
+
+		sort.Slice(v, func(i, j int) bool {
+			return v[i].Name < v[j].Name
+		})
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	_ = templates.ExecuteTemplate(buf, "index.htm", struct {
+		Categories []string
+		Jobs       map[string][]*Job
+	}{
+		Categories: keys,
+		Jobs:       jobs,
+	})
 	globalMutex.RUnlock()
 
 	_, _ = buf.WriteTo(w)
