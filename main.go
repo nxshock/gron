@@ -3,16 +3,12 @@ package main
 import (
 	"io"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"syscall"
 
 	formatter "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/robfig/cron/v3"
+	"github.com/kardianos/service"
 	log "github.com/sirupsen/logrus"
 )
-
-var c *cron.Cron
 
 func init() {
 	err := initConfig()
@@ -36,16 +32,12 @@ func init() {
 		NoColors:        true,
 		TrimMessages:    true})
 
-	multiWriter := io.MultiWriter(os.Stderr, mainLogFile)
-	log.SetOutput(multiWriter)
-
+	log.SetOutput(io.MultiWriter(os.Stderr, mainLogFile))
 	log.SetLevel(log.InfoLevel)
 
 	initTemplate()
 
 	go httpServer(config.HttpListenAddr)
-
-	c = cron.New()
 }
 
 func initJobs() error {
@@ -66,7 +58,7 @@ func initJobs() error {
 				return err
 			}
 
-			_, err = c.AddJob(job.JobConfig.Cron, job)
+			_, err = kernel.c.AddJob(job.JobConfig.Cron, job)
 			if err != nil {
 				return err
 			}
@@ -78,35 +70,30 @@ func initJobs() error {
 		return err
 	}
 
-	if len(c.Entries()) == 0 {
+	if len(kernel.c.Entries()) == 0 {
 		log.Warn("No jobs loaded.")
 	} else {
-		log.Infof("Loaded jobs count: %d", len(c.Entries()))
+		log.Infof("Loaded jobs count: %d", len(kernel.c.Entries()))
 	}
 
 	return nil
 }
 
 func main() {
-	log := log.WithField("job", "core")
+	kernel = NewKernel()
 
-	log.Info("Started.")
-
-	err := initJobs()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	c.Start()
-
-	intChan := make(chan os.Signal)
-	signal.Notify(intChan, syscall.SIGTERM)
-	<-intChan
-
-	log.Info("Got stop signal.")
-
-	err = mainLogFile.Close()
+	s, err := service.New(kernel, kernel.svcConfig)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	logger, err := s.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = s.Run()
+	if err != nil {
+		logger.Error(err)
 	}
 }

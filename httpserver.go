@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"os"
 	"sort"
 	"time"
 
@@ -40,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	globalMutex.RLock()
 	buf := new(bytes.Buffer)
-	jobEntries := c.Entries()
+	jobEntries := kernel.c.Entries()
 
 	jobs := make(map[string][]*Job)
 	for _, jobEntry := range jobEntries {
@@ -81,7 +80,7 @@ func handleForceStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobEntries := c.Entries()
+	jobEntries := kernel.c.Entries()
 
 	for _, jobEntry := range jobEntries {
 		job := jobEntry.Job.(*Job)
@@ -108,7 +107,7 @@ func handleShutdown(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		time.Sleep(time.Second)
 		log.WithField("job", "http_server").Infoln("Shutdown requested")
-		os.Exit(0)
+		_ = kernel.Stop(nil)
 	}()
 }
 
@@ -116,10 +115,10 @@ func handleReloadJobs(w http.ResponseWriter, r *http.Request) {
 	globalMutex.Lock()
 	defer globalMutex.Unlock()
 
-	c.Stop()
+	kernel.c.Stop()
 
-	for _, entry := range c.Entries() {
-		c.Remove(entry.ID)
+	for _, entry := range kernel.c.Entries() {
+		kernel.c.Remove(entry.ID)
 	}
 
 	err := initJobs()
@@ -128,7 +127,7 @@ func handleReloadJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.Start()
+	kernel.c.Start()
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
@@ -140,7 +139,7 @@ func handleDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobEntries := c.Entries()
+	jobEntries := kernel.c.Entries()
 
 	for _, jobEntry := range jobEntries {
 		job := jobEntry.Job.(*Job)

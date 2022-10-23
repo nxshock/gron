@@ -1,6 +1,8 @@
 package main
 
 const (
+	programName = "gron"
+
 	defaultConfigFileName = "gron.conf"
 
 	defaultOnSuccessMessageFmt = "Job {{.JobName}} finished."
