@@ -119,6 +119,9 @@ form {
 
 pre {
     font-family: "Consolas";
+    max-height: 16em;
+    max-width: 80em;
+    overflow: auto;
 }
 
 .no-padding {
