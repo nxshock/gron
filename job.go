@@ -111,7 +111,7 @@ func splitCommandAndParams(s string) (command string, params []string) {
 // jobLogFile - job log file with needs to be closed after job is done
 func (j *Job) openAndMergeLog() (logEntry *log.Entry, jobLogFile *os.File) {
 	jobLogFile, _ = os.OpenFile(filepath.Join(config.LogFilesPath, j.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644) // TODO: handle error
-	jobLogFile.WriteString("\n")
+	_, _ = jobLogFile.WriteString("\n")
 
 	logWriter := io.MultiWriter(mainLogFile, jobLogFile)
 
@@ -185,7 +185,7 @@ func (j *Job) runTry(log *log.Entry, jobLogFile *os.File) error {
 		j.LastError = ""
 		globalMutex.Unlock()
 	}
-	go j.runFinishCallback(err)
+	go j.runFinishCallback(log, err)
 
 	endTime := time.Now()
 	log.Infof("Finished (%s).", endTime.Sub(startTime).Truncate(time.Second).String())
@@ -234,44 +234,53 @@ func (j *Job) runSql(jobLogFile *os.File) error {
 	return nil
 }
 
-func (j *Job) runFinishCallback(err error) error {
+func (j *Job) runFinishCallback(log *log.Entry, jobErr error) error {
 	s := j.JobConfig.OnSuccessCmd
 
 	// Fill variables
 	errStr := ""
-	if err != nil {
-		errStr = err.Error()
+	if jobErr != nil {
+		errStr = jobErr.Error()
 	}
-	if err != nil {
+	if jobErr != nil {
 		s = format(s, struct{ Error string }{Error: errStr})
 	}
 
-	if err == nil && j.JobConfig.OnSuccessCmd != "" {
+	if jobErr == nil && j.JobConfig.OnSuccessCmd != "" {
 		cmd, params := splitCommandAndParams(s)
 		return runSimpleCmd(cmd, params...)
 	}
 
-	if err == nil && j.JobConfig.OnSuccessHttpPostUrl != "" {
-		httpPost(j.JobConfig.OnSuccessHttpPostUrl, j.successMessage()) // TODO: обработать ошибку
+	if jobErr == nil && j.JobConfig.OnSuccessHttpPostUrl != "" {
+		err := httpPost(j.JobConfig.OnSuccessHttpPostUrl, j.successMessage())
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
-	if err == nil && j.JobConfig.OnSuccessHttpGetUrl != "" {
-		httpGet(j.JobConfig.OnSuccessHttpPostUrl, j.Name, j.successMessage()) // TODO: обработать ошибку
+	if jobErr == nil && j.JobConfig.OnSuccessHttpGetUrl != "" {
+		err := httpGet(j.JobConfig.OnSuccessHttpPostUrl, j.Name, j.successMessage())
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
-	if err != nil && j.JobConfig.OnErrorCmd != "" {
+	if jobErr != nil && j.JobConfig.OnErrorCmd != "" {
 		cmd, params := splitCommandAndParams(s)
 		return runSimpleCmd(cmd, params...)
 	}
 
-	if err != nil && j.JobConfig.OnErrorHttpPostUrl != "" {
-		httpPost(j.JobConfig.OnErrorHttpPostUrl, j.errorMessage(err)) // TODO: обработать ошибку
+	if jobErr != nil && j.JobConfig.OnErrorHttpPostUrl != "" {
+		err := httpPost(j.JobConfig.OnErrorHttpPostUrl, j.errorMessage(jobErr))
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
-	if err != nil && j.JobConfig.OnErrorHttpGetUrl != "" {
-		err2 := httpGet(j.JobConfig.OnErrorHttpGetUrl, j.Name, err.Error())
-		if err2 != nil {
-			log.Errorf("OnErrorHttpGetUrl error: %v", err2) // TODO: сделать формат сообщения по стандарту
+	if jobErr != nil && j.JobConfig.OnErrorHttpGetUrl != "" {
+		err := httpGet(j.JobConfig.OnErrorHttpGetUrl, j.Name, jobErr.Error())
+		if err != nil {
+			log.Errorf("OnErrorHttpGetUrl error: %v", err) // TODO: сделать формат сообщения по стандарту
 		}
 	}
 
