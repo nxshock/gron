@@ -8,10 +8,48 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
+
+type WsConnections struct {
+	connections map[*websocket.Conn]struct{}
+	mutex       sync.Mutex
+}
+
+func (wc *WsConnections) Add(c *websocket.Conn) {
+	wc.mutex.Lock()
+	defer wc.mutex.Unlock()
+
+	wc.connections[c] = struct{}{}
+}
+
+func (wc *WsConnections) Delete(c *websocket.Conn) {
+	wc.mutex.Lock()
+	defer wc.mutex.Unlock()
+
+	delete(wc.connections, c)
+}
+
+func (wc *WsConnections) Send(message interface{}) {
+	for conn := range wc.connections {
+		go func(conn *websocket.Conn) { _ = conn.WriteJSON(message) }(conn)
+	}
+}
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+var wsConnections = &WsConnections{
+	connections: make(map[*websocket.Conn]struct{})}
 
 func httpServer(listenAddress string) {
 	if listenAddress == "none" {
@@ -23,6 +61,7 @@ func httpServer(listenAddress string) {
 	http.HandleFunc("/shutdown", handleShutdown)
 	http.HandleFunc("/start", handleForceStart)
 	http.HandleFunc("/details", handleDetails)
+	http.HandleFunc("/ws", handleWebSocket)
 	log.WithField("job", "http_server").Fatal(http.ListenAndServe(listenAddress, nil))
 }
 
@@ -39,10 +78,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	globalMutex.RLock()
 	buf := new(bytes.Buffer)
-	jobEntries := kernel.c.Entries()
 
 	jobs := make(map[string][]*Job)
-	for _, jobEntry := range jobEntries {
+	for _, jobEntry := range kernel.c.Entries() {
 		job := jobEntry.Job.(*Job)
 		job.NextLaunch = jobEntry.Next.Format(config.TimeFormat)
 		jobs[job.JobConfig.Category] = append(jobs[job.JobConfig.Category], job)
@@ -73,6 +111,41 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	_, _ = buf.WriteTo(w)
 }
 
+func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+
+	wsConnections.Add(conn)
+	defer wsConnections.Delete(conn)
+
+	var startMessage struct {
+		JobName string
+	}
+
+	for {
+		err := conn.ReadJSON(&startMessage)
+		if err != nil {
+			log.Println(err)
+			break
+		}
+
+		for _, jobEntry := range kernel.c.Entries() {
+			job := jobEntry.Job.(*Job)
+			if job.Name == startMessage.JobName {
+				host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+				if err != nil {
+					host = r.RemoteAddr
+				}
+				log.WithField("job", "http_server").Printf("Forced start %s from %s.", job.Name, host)
+				go job.Run()
+				break
+			}
+		}
+	}
+}
+
 func handleForceStart(w http.ResponseWriter, r *http.Request) {
 	jobName := r.FormValue("jobName")
 	if jobName == "" {
@@ -80,9 +153,7 @@ func handleForceStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobEntries := kernel.c.Entries()
-
-	for _, jobEntry := range jobEntries {
+	for _, jobEntry := range kernel.c.Entries() {
 		job := jobEntry.Job.(*Job)
 		if job.Name == jobName {
 			host, _, err := net.SplitHostPort(r.RemoteAddr)

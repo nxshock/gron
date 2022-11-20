@@ -128,6 +128,16 @@ func (j *Job) openAndMergeLog() (logEntry *log.Entry, jobLogFile *os.File) {
 }
 
 func (j *Job) Run() {
+	// TODO: переписать неоптимальный цикл
+	for _, jobEntry := range kernel.c.Entries() {
+		if jobEntry.Job.(*Job) != j {
+			continue
+		}
+
+		j.NextLaunch = jobEntry.Next.Format(config.TimeFormat)
+		break
+	}
+
 	log, jobLogFile := j.openAndMergeLog()
 	defer jobLogFile.Close()
 
@@ -165,6 +175,8 @@ func (j *Job) runTry(log *log.Entry, jobLogFile *os.File) error {
 	j.LastStartTime = startTime.Format(config.TimeFormat)
 	globalMutex.Unlock()
 
+	wsConnections.Send(j)
+
 	var err error
 	switch j.JobConfig.Type {
 	case Cmd:
@@ -195,6 +207,8 @@ func (j *Job) runTry(log *log.Entry, jobLogFile *os.File) error {
 	j.LastEndTime = endTime.Format(config.TimeFormat)
 	j.LastExecutionDuration = endTime.Sub(startTime).Truncate(time.Second).String()
 	globalMutex.Unlock()
+
+	wsConnections.Send(j)
 
 	return err
 }
@@ -318,12 +332,5 @@ func (j *Job) errorMessage(err error) string {
 }
 
 func runSimpleCmd(command string, args ...string) error {
-	log.Println(command)
-	log.Println(args)
-	err := exec.Command(command, args...).Run()
-	if err != nil {
-		log.Println(">>", err)
-	}
-
-	return err
+	return exec.Command(command, args...).Run()
 }

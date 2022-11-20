@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>gron</title>
     <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="data:,">
 </head>
 
 <body>
@@ -35,10 +36,9 @@
                 <th>Details</th>
             </tr>
             {{range (index $.Jobs .)}}
-            <tr>
+            <tr id="{{.Name}}">
                 <td class="no-padding">
-                    <form action="/start" method="get" id="form-{{.Name}}"></form>
-                    <button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg" {{end}}{{end}} type="submit" form="form-{{.Name}}" name="jobName" value="{{.Name}}" {{if gt .CurrentRunningCount 0}} disabled{{end}}>{{.Name}}</button>
+                    <button{{if gt .CurrentRunningCount 0}} class="runningbg" {{else}}{{if .LastError}} class="errorbg" {{end}}{{end}} name="jobName" value="{{.Name}}" {{if gt .CurrentRunningCount 0}} disabled{{end}} onclick='startJob("{{.Name}}")'>{{.Name}}</button>
                 </td>
                 <td class="smaller">{{.JobConfig.Description}}</td>
                 <td class="nowrap" align="right">
@@ -54,5 +54,54 @@
         </table>{{end}}
     </main>
 </body>
+<script>
+    let socket = new WebSocket("ws://" + window.location.host + "/ws")
+
+    socket.onerror = function(error) {
+        console.log("WebSocket error: " + JSON.stringify(error))
+        socket.close()
+    }
+
+    socket.onmessage = function(event) {
+        message = JSON.parse(event.data);
+
+        html4 = "unknown"
+        if (message.Status == 0) {
+            html4 = "&#x2bc0; inactive"
+        } else if (message.Status == 1) {
+            html4 = '<span class="green">&#x2bc8; running</span>'
+        } else if (message.Status == 2) {
+            html4 = '<span class="red">&#x2bc1; error</span>'
+        } else if (message.Status == 3) {
+            html4 = '<span class="orange">&#x27f3; restarting</span>'
+        }
+
+        if (message.CurrentRunningCount > 0) {
+            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").className = "runningbg"
+        } else if (message.LastError != "") {
+            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").className = "errorbg"
+        } else {
+            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").removeAttribute("class")
+        }
+
+        if (message.CurrentRunningCount > 0) {
+            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").setAttribute("disabled", "true")
+        } else {
+            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").removeAttribute("disabled")
+        }
+
+        document.querySelector("#" + message.Name + " > td:nth-child(4)").innerHTML = html4
+        document.querySelector("#" + message.Name + " > td:nth-child(5)").innerHTML = message.LastStartTime
+        document.querySelector("#" + message.Name + " > td:nth-child(6)").innerHTML = message.LastEndTime
+        document.querySelector("#" + message.Name + " > td:nth-child(7)").innerHTML = message.LastExecutionDuration
+        document.querySelector("#" + message.Name + " > td:nth-child(8)").innerHTML = message.NextLaunch
+    }
+
+    function startJob(jobName) {
+        socket.send(JSON.stringify({
+            jobName
+        }));
+    }
+</script>
 
 </html>
