@@ -84,8 +84,13 @@ func readJob(filePath string) (*Job, error) {
 		return nil, fmt.Errorf("unknown job type id: %v", int(jobConfig.Type)) // TODO: add job name to log
 	}
 
+	jobName := strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
+	jobName = strings.ReplaceAll(jobName, " ", "")
+	jobName = strings.ReplaceAll(jobName, "_", "")
+	jobName = strings.ReplaceAll(jobName, "#", "")
+
 	job := &Job{
-		Name:      strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath)),
+		Name:      jobName,
 		Status:    Inactive,
 		JobConfig: jobConfig}
 

@@ -76,25 +76,27 @@
             html4 = '<span class="orange">&#x27f3; restarting</span>'
         }
 
+        elementId = encodeURIComponent(message.Name)
+
         if (message.CurrentRunningCount > 0) {
-            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").className = "runningbg"
+            document.querySelector("#" + elementId + " > td:nth-child(1) > button").className = "runningbg"
         } else if (message.LastError != "") {
-            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").className = "errorbg"
+            document.querySelector("#" + elementId + " > td:nth-child(1) > button").className = "errorbg"
         } else {
-            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").removeAttribute("class")
+            document.querySelector("#" + elementId + " > td:nth-child(1) > button").removeAttribute("class")
         }
 
         if (message.CurrentRunningCount > 0) {
-            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").setAttribute("disabled", "true")
+            document.querySelector("#" + elementId + " > td:nth-child(1) > button").setAttribute("disabled", "true")
         } else {
-            document.querySelector("#" + message.Name + " > td:nth-child(1) > button").removeAttribute("disabled")
+            document.querySelector("#" + elementId + " > td:nth-child(1) > button").removeAttribute("disabled")
         }
 
-        document.querySelector("#" + message.Name + " > td:nth-child(4)").innerHTML = html4
-        document.querySelector("#" + message.Name + " > td:nth-child(5)").innerHTML = message.LastStartTime
-        document.querySelector("#" + message.Name + " > td:nth-child(6)").innerHTML = message.LastEndTime
-        document.querySelector("#" + message.Name + " > td:nth-child(7)").innerHTML = message.LastExecutionDuration
-        document.querySelector("#" + message.Name + " > td:nth-child(8)").innerHTML = message.NextLaunch
+        document.querySelector("#" + elementId + " > td:nth-child(4)").innerHTML = html4
+        document.querySelector("#" + elementId + " > td:nth-child(5)").innerHTML = message.LastStartTime
+        document.querySelector("#" + elementId + " > td:nth-child(6)").innerHTML = message.LastEndTime
+        document.querySelector("#" + elementId + " > td:nth-child(7)").innerHTML = message.LastExecutionDuration
+        document.querySelector("#" + elementId + " > td:nth-child(8)").innerHTML = message.NextLaunch
     }
 
     function startJob(jobName) {
