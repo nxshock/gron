@@ -106,6 +106,7 @@ th {
 
 table button {
     width: 100%;
+    text-align: left;
     color: #fff;
     background-color: var(--base01);
     border: 0;
