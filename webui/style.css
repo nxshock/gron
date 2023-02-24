@@ -159,7 +159,7 @@ pre {
 
 .dropdown {
     position: relative;
-    display: inline-block;
+    display: block;
     float: right;
 }
 
