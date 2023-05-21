@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -245,7 +246,10 @@ func (j *Job) runSql(jobLogFile *os.File) error {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(j.JobConfig.SqlText)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultDbTimeout)
+	defer cancel()
+
+	_, err = db.ExecContext(ctx, j.JobConfig.SqlText)
 	if err != nil {
 		return err
 	}
