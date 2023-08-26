@@ -11,7 +11,7 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/nxshock/logwriter v0.0.0-20220514172136-b1385d4106de
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sijms/go-ora/v2 v2.7.14
+	github.com/sijms/go-ora/v2 v2.7.16
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.0
 )
