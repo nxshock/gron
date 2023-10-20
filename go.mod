@@ -11,7 +11,7 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/nxshock/logwriter v0.0.0-20220514172136-b1385d4106de
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sijms/go-ora/v2 v2.7.16
+	github.com/sijms/go-ora/v2 v2.7.19
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.0
 )
@@ -29,9 +29,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
