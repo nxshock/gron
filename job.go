@@ -25,7 +25,8 @@ type JobConfig struct {
 	Category string
 
 	// JobType = Cmd
-	Command string // command for execution
+	Command    string // command for execution
+	WorkingDir string // working directory
 
 	// JobType = Sql
 	Driver           string
@@ -225,6 +226,7 @@ func (j *Job) runCmd(jobLogFile *os.File) error {
 	cmd := exec.Command(command, params...)
 	cmd.Stdout = jobLogFile
 	cmd.Stderr = jobLogFile
+	cmd.Dir = j.JobConfig.WorkingDir
 
 	return cmd.Run()
 }
