@@ -1,1 +1,1 @@
-go build -ldflags "-s -w -H windowsgui" -buildmode=pie -trimpath
+go build -ldflags "-s -w" -buildmode=pie -trimpath
