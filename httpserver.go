@@ -16,7 +16,7 @@ import (
 )
 
 type WsConnections struct {
-	connections map[*websocket.Conn]struct{}
+	connections map[*WsConnection]struct{}
 	mutex       sync.Mutex
 }
 
@@ -24,19 +24,24 @@ func (wc *WsConnections) Add(c *websocket.Conn) {
 	wc.mutex.Lock()
 	defer wc.mutex.Unlock()
 
-	wc.connections[c] = struct{}{}
+	wc.connections[NewWsConnection(c)] = struct{}{}
 }
 
 func (wc *WsConnections) Delete(c *websocket.Conn) {
 	wc.mutex.Lock()
 	defer wc.mutex.Unlock()
 
-	delete(wc.connections, c)
+	for k := range wc.connections {
+		if k.w == c {
+			delete(wc.connections, k)
+			break
+		}
+	}
 }
 
 func (wc *WsConnections) Send(message interface{}) {
 	for conn := range wc.connections {
-		go func(conn *websocket.Conn) { _ = conn.WriteJSON(message) }(conn)
+		go func(conn *WsConnection) { _ = conn.Send(message) }(conn)
 	}
 }
 
@@ -49,7 +54,7 @@ var upgrader = websocket.Upgrader{
 }
 
 var wsConnections = &WsConnections{
-	connections: make(map[*websocket.Conn]struct{})}
+	connections: make(map[*WsConnection]struct{})}
 
 func httpServer(listenAddress string) {
 	if listenAddress == "none" {
